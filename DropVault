@@ -1,0 +1,62 @@
+pragma solidity ^0.8.0;
+
+contract TreasuryVault {
+
+  // The total amount of ETH in the vault
+  uint public totalETH;
+
+  // The total amount of DROP tokens in circulation
+  uint public totalDROP;
+
+  // The mapping from user addresses to the number of DROP tokens they hold
+  mapping(address => uint) public balances;
+
+  // Function to deposit ETH into the vault
+  function depositETH(uint amount) public {
+    // Update the total ETH in the vault
+    totalETH += amount;
+
+    // Mint DROP tokens to the depositor
+    uint newDROP = amount * totalDROP / totalETH;
+    balances[msg.sender] += newDROP;
+
+    // Emit an event to notify listeners of the deposit
+    emit Deposit(msg.sender, amount, newDROP);
+  }
+
+  // Function to burn DROP tokens to withdraw ETH from the vault
+  function burnDROP(uint amount) public {
+    // Check if the user has enough DROP tokens to burn
+    require(balances[msg.sender] >= amount);
+
+    // Update the total DROP in circulation
+    totalDROP -= amount;
+
+    // Update the user's balance
+    balances[msg.sender] -= amount;
+
+    // Transfer the ETH to the user
+    address recipient = msg.sender;
+    uint amountETH = amount * totalETH / totalDROP;
+    recipient.transfer(amountETH);
+
+    // Emit an event to notify listeners of the withdrawal
+    emit Withdrawal(msg.sender, amount, amountETH);
+  }
+
+  // Getter function for the total ETH in the vault
+  function getTotalETH() public view returns (uint) {
+    return totalETH;
+  }
+
+  // Getter function for the total DROP tokens in circulation
+  function getTotalDROP() public view returns (uint) {
+    return totalDROP;
+  }
+
+  // Getter function for the user's balance
+  function balanceOf(address user) public view returns (uint) {
+    return balances[user];
+  }
+
+}
